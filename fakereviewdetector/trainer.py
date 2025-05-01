@@ -9,7 +9,6 @@ def train_and_evaluate(
     val_df,
     test_df,
     model_name,
-    model_type=None,
     method="simple",
     max_len=128,
     batch_size=16,
@@ -47,10 +46,7 @@ def train_and_evaluate(
         )
 
     elif method == "simple":
-        if model_type is None:
-            raise ValueError("model_type must be specified for method='simple'")
         return train_and_evaluate_simple(
-            model_type=model_type,
             model_name=model_name,
             train_df=train_df,
             val_df=val_df,

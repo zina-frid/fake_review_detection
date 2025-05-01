@@ -1,41 +1,52 @@
 import time
-from simpletransformers.classification import ClassificationModel
+import torch
+from datasets import Dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from fakereviewdetector.utils import compute_metrics, format_time
 
 
-def train_and_evaluate_simple(model_type, model_name, train_df, val_df, test_df, max_len, batch_size, epochs, output_dir):
-    model = ClassificationModel(
-        model_type,
-        model_name,
-        num_labels=2,
-        use_cuda=True,
-        args={
-            'reprocess_input_data': True,
-            'overwrite_output_dir': True,
-            'num_train_epochs': epochs,
-            'train_batch_size': batch_size,
-            'learning_rate': 1e-5,
-            'adam_epsilon': 1e-8,
-            'max_seq_length': max_len,
-            'dropout': 0.3,
-            'evaluate_during_training': True,
-            'evaluate_during_training_steps': 1000,
-            'evaluate_during_training_verbose': True,
-            'use_cuda': True,
-            'silent': False
-        }
+def train_and_evaluate_simple(model_name, train_df, val_df, test_df, max_len, batch_size, epochs, output_dir):
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    def preprocess_function(examples):
+        return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=max_len)
+
+    train_dataset = Dataset.from_pandas(train_df).rename_column("class", "labels").map(preprocess_function, batched=True)
+    val_dataset = Dataset.from_pandas(val_df).rename_column("class", "labels").map(preprocess_function, batched=True)
+    test_dataset = Dataset.from_pandas(test_df).rename_column("class", "labels").map(preprocess_function, batched=True)
+
+    for ds in [train_dataset, val_dataset, test_dataset]:
+        ds.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
+
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        num_train_epochs=epochs,
+        per_device_train_batch_size=batch_size,
+        evaluation_strategy="epoch",
+        logging_dir="./logs",
+        report_to="none"
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset
     )
 
     start_time = time.time()
-    print("Training the model")
-    model.train_model(train_df, eval_df=val_df)
+    trainer.train()
     end_time = time.time()
 
-    print("Predictions")
-    preds, _ = model.predict(test_df["text"].tolist())
+    predictions = trainer.predict(test_dataset)
+    preds = torch.argmax(torch.tensor(predictions.predictions), dim=1).numpy()
+
+    model.save_pretrained(output_dir)
+    tokenizer.save_pretrained(output_dir)
+
     metrics = compute_metrics(test_df["class"], preds)
     duration = format_time(end_time - start_time)
-
-    model.save_model(output_dir)
 
     return metrics, duration
