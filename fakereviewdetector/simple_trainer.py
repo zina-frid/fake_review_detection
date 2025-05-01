@@ -36,6 +36,6 @@ def train_and_evaluate_simple(model_type, model_name, train_df, val_df, test_df,
     metrics = compute_metrics(test_df["class"], preds)
     duration = format_time(end_time - start_time)
 
-    model.save_model(output_dir + 'simple_model')
+    model.save_model(output_dir)
 
     return metrics, duration
