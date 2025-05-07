@@ -1,6 +1,7 @@
 import time
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
 
 def format_time(seconds):
     minutes = int(seconds // 60)
@@ -23,3 +24,25 @@ def compute_metrics(y_true, y_pred):
         "Weighted-Recall": recall_score(y_true, y_pred, average='weighted'),
         "Weighted-F1 Score": f1_score(y_true, y_pred, average='weighted'),
     }
+
+
+def predict_review(model_path, review_text):
+
+    # Загружаем токенизатор и модель
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model = AutoModelForSequenceClassification.from_pretrained(model_path)
+
+    # Переводим модель в режим оценки (выключение dropout и других элементов)
+    model.eval()
+
+    # Токенизируем текст отзыва
+    inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True)
+
+    # Получаем логиты модели
+    with torch.no_grad():
+        logits = model(**inputs).logits
+
+    # Получаем предсказание (класс с максимальным значением)
+    predicted = torch.argmax(logits, dim=1).item()
+
+    return predicted
