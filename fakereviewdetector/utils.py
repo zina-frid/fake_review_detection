@@ -17,12 +17,12 @@ def save_results(metrics, time_taken, output_path):
 def compute_metrics(y_true, y_pred):
     return {
         "Accuracy": accuracy_score(y_true, y_pred),
-        "Macro-Precision": precision_score(y_true, y_pred, average='macro'),
-        "Macro-Recall": recall_score(y_true, y_pred, average='macro'),
-        "Macro-F1 Score": f1_score(y_true, y_pred, average='macro'),
-        "Weighted-Precision": precision_score(y_true, y_pred, average='weighted'),
-        "Weighted-Recall": recall_score(y_true, y_pred, average='weighted'),
-        "Weighted-F1 Score": f1_score(y_true, y_pred, average='weighted'),
+        "Macro Precision": precision_score(y_true, y_pred, average='macro'),
+        "Macro Recall": recall_score(y_true, y_pred, average='macro'),
+        "Macro F1 Score": f1_score(y_true, y_pred, average='macro'),
+        "Weighted Precision": precision_score(y_true, y_pred, average='weighted'),
+        "Weighted Recall": recall_score(y_true, y_pred, average='weighted'),
+        "Weighted F1 Score": f1_score(y_true, y_pred, average='weighted'),
     }
 
 
