@@ -43,6 +43,7 @@ def train_and_evaluate_simple(model_name, train_df, val_df, test_df, max_len, ba
     predictions = trainer.predict(test_dataset)
     preds = torch.argmax(torch.tensor(predictions.predictions), dim=1).numpy()
 
+    os.makedirs(output_dir, exist_ok=True)
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
 
