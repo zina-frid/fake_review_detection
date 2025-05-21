@@ -54,24 +54,7 @@ def train_and_evaluate_bilstm(model_name, train_df, val_df, test_df, max_len, ba
     duration = format_time(end_time - start_time)
 
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Сохраняем полную модель (включая архитектуру)
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'transformer_name': model_name,
-        'hidden_dim': model.lstm.hidden_size,
-    }, os.path.join(output_dir, "bilstm_model.pth"))
-    
-    # Сохраняем конфигурацию отдельно
-    with open(os.path.join(output_dir, "config.json"), "w") as f:
-        json.dump({
-            "model_name": model_name,
-            "max_len": max_len,
-            "hidden_dim": model.lstm.hidden_size,
-            "num_labels": 2
-        }, f)
-    
+    torch.save(model.state_dict(), os.path.join(output_dir, "bilstm_model.pt"))
     tokenizer.save_pretrained(output_dir)
-    print(f"Модель успешно сохранена в {output_dir}")
-    
+
     return metrics, duration
