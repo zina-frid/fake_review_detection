@@ -1,4 +1,5 @@
 import time
+import os
 import torch
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
@@ -51,6 +52,7 @@ def train_and_evaluate_pruned(model_name, train_df, val_df, test_df, max_len, ba
     metrics = compute_metrics(test_df["class"], preds)
     duration = format_time(end_time - start_time)
 
+    os.makedirs(output_dir, exist_ok=True)
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
 
