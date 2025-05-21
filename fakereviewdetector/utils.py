@@ -31,10 +31,13 @@ def predict_review(model_path, review_text):
     if "bilstm" in model_path.lower():
         # Load BiLSTM model
         from fakereviewdetector.models import TransformerBiLSTMClassifier
-        from transformers import AutoTokenizer
-        
+
+        with open(os.path.join(model_path, "model_info.txt"), "r") as f:
+            original_model_name = f.read().strip()
+    
         tokenizer = AutoTokenizer.from_pretrained(model_path)
-        model = TransformerBiLSTMClassifier(tokenizer.name_or_path)
+        model = TransformerBiLSTMClassifier(original_model_name)
+        
         model.load_state_dict(torch.load(os.path.join(model_path, "bilstm_model.pt")))
         model.eval()
         
