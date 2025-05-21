@@ -56,5 +56,7 @@ def train_and_evaluate_bilstm(model_name, train_df, val_df, test_df, max_len, ba
     os.makedirs(output_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(output_dir, "bilstm_model.pt"))
     tokenizer.save_pretrained(output_dir)
+    with open(os.path.join(output_dir, "model_info.txt"), "w") as f:
+        f.write(model_name)
 
     return metrics, duration
