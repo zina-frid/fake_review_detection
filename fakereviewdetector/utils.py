@@ -28,21 +28,36 @@ def compute_metrics(y_true, y_pred):
 
 def predict_review(model_path, review_text):
 
-    # Загружаем токенизатор и модель
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path)
+    if "bilstm" in model_path.lower():
+        # Load BiLSTM model
+        from fakereviewdetector.models import TransformerBiLSTMClassifier
+        from transformers import AutoTokenizer
+        
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = TransformerBiLSTMClassifier(tokenizer.name_or_path)
+        model.load_state_dict(torch.load(os.path.join(model_path, "bilstm_model.pt")))
+        model.eval()
+        
+        # Токенизируем и предсказываем
+        inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True)
+        with torch.no_grad():
+            logits = model(inputs['input_ids'], inputs['attention_mask'])
+        predicted = torch.argmax(logits, dim=1).item()
+    else:
+        # Загружаем токенизатор и модель
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        # Переводим модель в режим оценки (выключение dropout и других элементов)
+        model.eval()
 
-    # Переводим модель в режим оценки (выключение dropout и других элементов)
-    model.eval()
+        # Токенизируем текст отзыва
+        inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True)
 
-    # Токенизируем текст отзыва
-    inputs = tokenizer(review_text, return_tensors="pt", truncation=True, padding=True)
-
-    # Получаем логиты модели
-    with torch.no_grad():
-        logits = model(**inputs).logits
-
-    # Получаем предсказание (класс с максимальным значением)
-    predicted = torch.argmax(logits, dim=1).item()
-
+        # Получаем логиты модели
+        with torch.no_grad():
+            logits = model(**inputs).logits
+            
+        # Получаем предсказание (класс с максимальным значением)
+        predicted = torch.argmax(logits, dim=1).item()
+    
     return predicted
